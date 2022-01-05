@@ -5,53 +5,66 @@ contract Token {
   string public name = "Genesis  Token";
   string public symbol = "GT";
   uint public totalSupply;
+
   mapping (address => uint) public balanceOf;
   mapping(address => mapping(address => uint256)) public allowance;
-  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Transfer(
+    address indexed _from, 
+    address indexed _to, 
+    uint256 _value
+  );
   event Approval(
-        address indexed _owner,
-        address indexed _spender,
-        uint256 _value
-    );
+    address indexed _owner,
+    address indexed _spender,
+    uint256 _value
+  );
   constructor(uint _initialSupply)  {
       balanceOf[msg.sender] = _initialSupply;
       totalSupply = _initialSupply;
 
   }
 
+  modifier validDestination( address to ) {
+    require(to != address(0x0));
+    require(to != address(this) );
+    _;
+  }
 
-  function transfer(address _to, uint _value) public returns(bool success){
+
+  function transfer(address _to, uint _value) public validDestination(_to)  returns(bool success){
     require(balanceOf[msg.sender] >= _value);
-
     balanceOf[msg.sender] -= _value;
     balanceOf[_to] += _value;
-
-    emit Transfer(msg.sender, _to, _value);
-
-
+    emit Transfer(
+      msg.sender, 
+      _to, 
+      _value
+    );
     return true;
     
   }
   function approve(address _spender, uint256 _value) public returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
+    allowance[msg.sender][_spender] = _value;
+    emit Approval(
+      msg.sender, 
+      _spender, 
+      _value
+    );
+    return true;
+  }
 
-       emit Approval(msg.sender, _spender, _value);
-
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= balanceOf[_from]);
-        require(_value <= allowance[_from][msg.sender]);
-
-        balanceOf[_from] -= _value;
-        balanceOf[_to] += _value;
-
-        allowance[_from][msg.sender] -= _value;
-
-        emit Transfer(_from, _to, _value);
-
-        return true;
+  function transferFrom(address _from, address _to, uint256 _value) public validDestination(_to) returns (bool success) {
+    require(_value <= balanceOf[_from]);
+    require(_value <= allowance[_from][msg.sender]);
+    balanceOf[_from] -= _value;
+    balanceOf[_to] += _value;
+    allowance[_from][msg.sender] -= _value;
+    emit Transfer(
+      _from,
+      _to,
+      _value
+    );
+    return true;
     }
 
 
